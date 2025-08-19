@@ -61,7 +61,7 @@ class AIService:
     def voice_to_voice(self, input_audio_path: str, output_path: str, target_voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:
         """Direct voice-to-voice conversion using ElevenLabs Voice Conversion API."""
         try:
-            url = f"https://api.elevenlabs.io/v1/voice-conversion"
+            url = "https://api.elevenlabs.io/v1/voice-conversion"
             
             with open(input_audio_path, "rb") as audio_file:
                 files = {"input_file": audio_file}
@@ -77,10 +77,31 @@ class AIService:
                     return "Voice converted successfully"
                 else:
                     print(f"Voice conversion error: {response.status_code} - {response.text}")
-                    return ""
+                    # Try alternative approach - convert to text then back to speech
+                    return self.fallback_voice_conversion(input_audio_path, output_path, target_voice_id)
                     
         except Exception as e:
             print(f"Error in voice to voice conversion: {e}")
+            # Try alternative approach
+            return self.fallback_voice_conversion(input_audio_path, output_path, target_voice_id)
+    
+    def fallback_voice_conversion(self, input_audio_path: str, output_path: str, target_voice_id: str) -> str:
+        """Fallback: Convert speech to text then back to speech with target voice."""
+        try:
+            # Step 1: Convert speech to text
+            text = self.speech_to_text(input_audio_path)
+            
+            if not text:
+                return ""
+            
+            # Step 2: Convert text to speech with target voice
+            if self.text_to_speech(text, output_path, target_voice_id):
+                return "Voice converted successfully (fallback method)"
+            else:
+                return ""
+                
+        except Exception as e:
+            print(f"Error in fallback voice conversion: {e}")
             return ""
     
     def speech_to_speech(self, audio_file_path: str, output_path: str, voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:

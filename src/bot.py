@@ -50,21 +50,7 @@ class TelegramAIBot:
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command."""
         welcome_message = """
-Welcome to the ElevenLabs Voice Bot!
-
-I can convert text to speech and convert voice messages using your custom ElevenLabs voices.
-
-Available Commands:
-/start - Show this welcome message
-/help - Show help information
-/voices - List available voices
-
-Features:
-Text-to-Speech: Convert text to your custom voices
-Voice-to-Voice: Convert voice messages to different voices
-Custom Voices: Use your own ElevenLabs voices
-
-Just click the button below to get started!
+Click to Generate
         """
         
         keyboard = [
@@ -202,8 +188,18 @@ Just click "Generate Voice" to start!
                             title="Generated Voice",
                             performer="ElevenLabs"
                         )
+                    
+                    # Show Generate Voice button after success
+                    keyboard = [[InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    await update.message.reply_text("Click to Generate", reply_markup=reply_markup)
                 else:
                     await update.message.reply_text("Sorry, I couldn't generate the voice. Please try again.")
+                    
+                    # Show Generate Voice button after failure
+                    keyboard = [[InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    await update.message.reply_text("Click to Generate", reply_markup=reply_markup)
             
             # Clean up
             if os.path.exists(mp3_path):
@@ -212,6 +208,11 @@ Just click "Generate Voice" to start!
         except Exception as e:
             logger.error(f"Error generating speech: {e}")
             await update.message.reply_text("Sorry, I encountered an error while generating the voice.")
+            
+            # Show Generate Voice button after error
+            keyboard = [[InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text("Click to Generate", reply_markup=reply_markup)
     
     async def convert_voice_to_voice(self, update: Update, context: ContextTypes.DEFAULT_TYPE, voice_id: str, is_audio: bool = False):
         """Convert voice to voice using selected voice."""
@@ -254,8 +255,18 @@ Just click "Generate Voice" to start!
                             title="Voice Converted",
                             performer="ElevenLabs Voice Conversion"
                         )
+                    
+                    # Show Generate Voice button after success
+                    keyboard = [[InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    await update.message.reply_text("Click to Generate", reply_markup=reply_markup)
                 else:
                     await update.message.reply_text("Sorry, I couldn't convert your voice. Please try again.")
+                    
+                    # Show Generate Voice button after failure
+                    keyboard = [[InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    await update.message.reply_text("Click to Generate", reply_markup=reply_markup)
             
             # Clean up
             os.unlink(input_path)
@@ -265,6 +276,11 @@ Just click "Generate Voice" to start!
         except Exception as e:
             logger.error(f"Error converting voice: {e}")
             await update.message.reply_text("Sorry, I encountered an error while converting your voice.")
+            
+            # Show Generate Voice button after error
+            keyboard = [[InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text("Click to Generate", reply_markup=reply_markup)
     
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle callback queries from inline buttons."""
