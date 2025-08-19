@@ -22,17 +22,21 @@ class AIService:
     def speech_to_text(self, audio_file_path: str) -> str:
         """Convert speech from audio file to text using ElevenLabs Speech-to-Text API."""
         try:
+            print(f"Starting speech to text for file: {audio_file_path}")
             url = "https://api.elevenlabs.io/v1/speech-to-text"
             
             with open(audio_file_path, "rb") as audio_file:
                 files = {"file": audio_file}
                 headers = {"xi-api-key": self.api_key}
                 
+                print("Sending request to ElevenLabs Speech-to-Text API")
                 response = requests.post(url, files=files, headers=headers)
                 
                 if response.status_code == 200:
                     result = response.json()
-                    return result.get("text", "")
+                    text = result.get("text", "")
+                    print(f"Speech-to-text successful: '{text}'")
+                    return text
                 else:
                     print(f"Speech-to-text error: {response.status_code} - {response.text}")
                     return ""
@@ -59,45 +63,34 @@ class AIService:
             return False
     
     def voice_to_voice(self, input_audio_path: str, output_path: str, target_voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:
-        """Direct voice-to-voice conversion using ElevenLabs Voice Conversion API."""
+        """Voice-to-voice conversion using speech-to-text then text-to-speech."""
         try:
-            url = "https://api.elevenlabs.io/v1/voice-conversion"
-            
-            with open(input_audio_path, "rb") as audio_file:
-                files = {"input_file": audio_file}
-                data = {"voice_id": target_voice_id}
-                headers = {"xi-api-key": self.api_key}
-                
-                response = requests.post(url, files=files, data=data, headers=headers)
-                
-                if response.status_code == 200:
-                    # Save the converted audio
-                    with open(output_path, "wb") as f:
-                        f.write(response.content)
-                    return "Voice converted successfully"
-                else:
-                    print(f"Voice conversion error: {response.status_code} - {response.text}")
-                    # Try alternative approach - convert to text then back to speech
-                    return self.fallback_voice_conversion(input_audio_path, output_path, target_voice_id)
-                    
+            # Use the reliable fallback method directly
+            return self.fallback_voice_conversion(input_audio_path, output_path, target_voice_id)
         except Exception as e:
             print(f"Error in voice to voice conversion: {e}")
-            # Try alternative approach
-            return self.fallback_voice_conversion(input_audio_path, output_path, target_voice_id)
+            return ""
     
     def fallback_voice_conversion(self, input_audio_path: str, output_path: str, target_voice_id: str) -> str:
         """Fallback: Convert speech to text then back to speech with target voice."""
         try:
+            print(f"Starting fallback voice conversion for file: {input_audio_path}")
+            
             # Step 1: Convert speech to text
             text = self.speech_to_text(input_audio_path)
+            print(f"Speech to text result: '{text}'")
             
             if not text:
+                print("No text extracted from speech")
                 return ""
             
             # Step 2: Convert text to speech with target voice
+            print(f"Converting text to speech with voice ID: {target_voice_id}")
             if self.text_to_speech(text, output_path, target_voice_id):
+                print("Text to speech successful")
                 return "Voice converted successfully (fallback method)"
             else:
+                print("Text to speech failed")
                 return ""
                 
         except Exception as e:

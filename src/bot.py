@@ -238,6 +238,11 @@ Just click "Generate Voice" to start!
                     wav_path = temp_wav.name
                     if not self.ai_service.convert_ogg_to_wav(input_path, wav_path):
                         await update.message.reply_text("Sorry, I couldn't process the audio file.")
+                        
+                        # Show Generate Voice button after failure
+                        keyboard = [[InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+                        await update.message.reply_text("Click to Generate", reply_markup=reply_markup)
                         return
                     input_path = wav_path
             
