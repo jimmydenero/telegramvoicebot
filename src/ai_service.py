@@ -63,7 +63,7 @@ class AIService:
             return False
     
     def voice_to_voice(self, input_audio_path: str, output_path: str, target_voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:
-        """Voice-to-voice conversion using speech-to-text then text-to-speech."""
+        """Direct voice-to-voice conversion using ElevenLabs Voice Conversion API."""
         try:
             print(f"Starting voice-to-voice conversion for file: {input_audio_path}")
             
@@ -75,8 +75,30 @@ class AIService:
             file_size = os.path.getsize(input_audio_path)
             print(f"Input file size: {file_size} bytes")
             
-            # Use the reliable method: speech-to-text then text-to-speech
-            return self.fallback_voice_conversion(input_audio_path, output_path, target_voice_id)
+            url = "https://api.elevenlabs.io/v1/voice-conversion"
+            
+            with open(input_audio_path, "rb") as audio_file:
+                files = {"input_file": audio_file}
+                data = {"voice_id": target_voice_id}
+                headers = {"xi-api-key": self.api_key}
+                
+                print(f"Sending request to ElevenLabs Voice Conversion API with voice_id: {target_voice_id}")
+                print(f"API Key (first 10 chars): {self.api_key[:10]}...")
+                
+                response = requests.post(url, files=files, data=data, headers=headers)
+                
+                print(f"Response status code: {response.status_code}")
+                print(f"Response headers: {dict(response.headers)}")
+                
+                if response.status_code == 200:
+                    # Save the converted audio
+                    with open(output_path, "wb") as f:
+                        f.write(response.content)
+                    print(f"Voice-to-voice conversion successful. Output file size: {os.path.getsize(output_path)} bytes")
+                    return "Voice converted successfully"
+                else:
+                    print(f"Voice-to-voice error: {response.status_code} - {response.text}")
+                    return ""
                     
         except Exception as e:
             print(f"Error in voice to voice conversion: {e}")
