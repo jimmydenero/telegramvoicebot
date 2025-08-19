@@ -63,7 +63,7 @@ class AIService:
             return False
     
     def voice_to_voice(self, input_audio_path: str, output_path: str, target_voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:
-        """Direct voice-to-voice conversion using ElevenLabs Voice Conversion API."""
+        """Direct voice-to-voice conversion using ElevenLabs Speech-to-Speech API."""
         try:
             print(f"Starting voice-to-voice conversion for file: {input_audio_path}")
             
@@ -75,14 +75,15 @@ class AIService:
             file_size = os.path.getsize(input_audio_path)
             print(f"Input file size: {file_size} bytes")
             
-            url = "https://api.elevenlabs.io/v1/voice-conversion"
+            # Correct ElevenLabs Speech-to-Speech API endpoint
+            url = f"https://api.elevenlabs.io/v1/speech-to-speech/{target_voice_id}"
             
             with open(input_audio_path, "rb") as audio_file:
-                files = {"input_file": audio_file}
-                data = {"voice_id": target_voice_id}
+                files = {"audio": audio_file}
+                data = {"model_id": "eleven_english_sts_v2"}
                 headers = {"xi-api-key": self.api_key}
                 
-                print(f"Sending request to ElevenLabs Voice Conversion API with voice_id: {target_voice_id}")
+                print(f"Sending request to ElevenLabs Speech-to-Speech API with voice_id: {target_voice_id}")
                 print(f"API Key (first 10 chars): {self.api_key[:10]}...")
                 
                 response = requests.post(url, files=files, data=data, headers=headers)
