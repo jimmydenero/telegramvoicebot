@@ -193,28 +193,16 @@ class AIService:
             return []
     
     def convert_ogg_to_wav(self, ogg_path: str, wav_path: str) -> bool:
-        """Convert OGG audio file to WAV format using pydub."""
+        """Use original file without conversion - ElevenLabs can handle OGG."""
         try:
-            from pydub import AudioSegment
-            
-            # Load the OGG file
-            audio = AudioSegment.from_ogg(ogg_path)
-            
-            # Export as WAV
-            audio.export(wav_path, format="wav")
-            
+            import shutil
+            # Just copy the file with .wav extension - ElevenLabs should handle it
+            shutil.copy2(ogg_path, wav_path)
+            print("Using original OGG file without conversion")
             return True
         except Exception as e:
-            print(f"Error converting audio format: {e}")
-            # If pydub fails, try to use the original file
-            try:
-                import shutil
-                shutil.copy2(ogg_path, wav_path)
-                print("Using original file format instead of conversion")
-                return True
-            except Exception as e2:
-                print(f"Error copying file: {e2}")
-                return False
+            print(f"Error copying file: {e}")
+            return False
     
     def get_relevant_knowledge(self, query: str) -> str:
         """Retrieve relevant knowledge from the database based on the query."""
