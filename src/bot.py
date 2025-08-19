@@ -50,25 +50,25 @@ class TelegramAIBot:
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command."""
         welcome_message = """
-🎤 Welcome to the ElevenLabs Voice Bot!
+Welcome to the ElevenLabs Voice Bot!
 
 I can convert text to speech and convert voice messages using your custom ElevenLabs voices.
 
-**Available Commands:**
+Available Commands:
 /start - Show this welcome message
 /help - Show help information
 /voices - List available voices
 
-**Features:**
-🎤 Text-to-Speech: Convert text to your custom voices
-🎭 Voice-to-Voice: Convert voice messages to different voices
-🎵 Custom Voices: Use your own ElevenLabs voices
+Features:
+Text-to-Speech: Convert text to your custom voices
+Voice-to-Voice: Convert voice messages to different voices
+Custom Voices: Use your own ElevenLabs voices
 
-**Just click the button below to get started!** 🎤
+Just click the button below to get started!
         """
         
         keyboard = [
-            [InlineKeyboardButton("🎤 Generate Voice", callback_data="generate_voice")]
+            [InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -77,26 +77,26 @@ I can convert text to speech and convert voice messages using your custom Eleven
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command."""
         help_text = """
-🎤 **ElevenLabs Voice Bot Help**
+ElevenLabs Voice Bot Help
 
-**Commands:**
-• `/start` - Welcome message and main menu
-• `/help` - Show this help information
-• `/voices` - List available ElevenLabs voices
+Commands:
+/start - Welcome message and main menu
+/help - Show this help information
+/voices - List available ElevenLabs voices
 
-**How to Use:**
-1. Click "🎤 Generate Voice" button
+How to Use:
+1. Click "Generate Voice" button
 2. Select a voice from the list
 3. Send text or voice message
 4. Get converted audio back
 
-**Features:**
-• Text-to-Speech with custom voices
-• Voice-to-Voice conversion
-• Custom voice selection
-• Interactive voice buttons
+Features:
+Text-to-Speech with custom voices
+Voice-to-Voice conversion
+Custom voice selection
+Interactive voice buttons
 
-**Just click "Generate Voice" to start!** 🎤
+Just click "Generate Voice" to start!
         """
         await update.message.reply_text(help_text)
     
@@ -110,16 +110,16 @@ I can convert text to speech and convert voice messages using your custom Eleven
             )
             return
         
-        response = "🎤 **Available ElevenLabs Voices:**\n\n"
+        response = "Available ElevenLabs Voices:\n\n"
         for i, voice in enumerate(voices[:10], 1):  # Show first 10 voices
-            response += f"**{i}. {voice['name']}**\n"
-            response += f"   ID: `{voice['voice_id']}`\n"
+            response += f"{i}. {voice['name']}\n"
+            response += f"   ID: {voice['voice_id']}\n"
             response += f"   Category: {voice['category']}\n\n"
         
         if len(voices) > 10:
             response += f"... and {len(voices) - 10} more voices available.\n\n"
         
-        response += "💡 **Tip:** Use the Generate Voice button to select and use these voices."
+        response += "Tip: Use the Generate Voice button to select and use these voices."
         
         await update.message.reply_text(response)
     
@@ -140,7 +140,7 @@ I can convert text to speech and convert voice messages using your custom Eleven
         else:
             # Show the generate voice button
             keyboard = [
-                [InlineKeyboardButton("🎤 Generate Voice", callback_data="generate_voice")]
+                [InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(
@@ -159,7 +159,7 @@ I can convert text to speech and convert voice messages using your custom Eleven
         else:
             # Show voice selection first
             keyboard = [
-                [InlineKeyboardButton("🎤 Generate Voice", callback_data="generate_voice")]
+                [InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(
@@ -178,7 +178,7 @@ I can convert text to speech and convert voice messages using your custom Eleven
         else:
             # Show voice selection first
             keyboard = [
-                [InlineKeyboardButton("🎤 Generate Voice", callback_data="generate_voice")]
+                [InlineKeyboardButton("Generate Voice", callback_data="generate_voice")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(
@@ -277,7 +277,7 @@ I can convert text to speech and convert voice messages using your custom Eleven
             
             if not voices:
                 await query.edit_message_text(
-                    "❌ Could not retrieve voices. Please check your ElevenLabs API key."
+                    "Could not retrieve voices. Please check your ElevenLabs API key."
                 )
                 return
             
@@ -286,14 +286,14 @@ I can convert text to speech and convert voice messages using your custom Eleven
             for voice in voices[:8]:  # Show first 8 voices
                 keyboard.append([
                     InlineKeyboardButton(
-                        f"🎤 {voice['name']}", 
+                        f"{voice['name']}", 
                         callback_data=f"select_voice_{voice['voice_id']}"
                     )
                 ])
             
             reply_markup = InlineKeyboardMarkup(keyboard)
             await query.edit_message_text(
-                "🎤 **Select a Voice**\n\nChoose a voice to use for text-to-speech or voice conversion:",
+                "Select a voice",
                 reply_markup=reply_markup
             )
         
@@ -308,7 +308,7 @@ I can convert text to speech and convert voice messages using your custom Eleven
             }
             
             await query.edit_message_text(
-                "✅ **Voice Selected!**\n\nNow send me some text to convert to speech, or send a voice message to convert it to the selected voice."
+                "Voice Selected! Now send me some text to convert to speech, or send a voice message to convert it to the selected voice."
             )
     
     def run(self):

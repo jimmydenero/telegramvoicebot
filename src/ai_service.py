@@ -124,17 +124,20 @@ class AIService:
             return f"I received your message: '{user_message}'. This is a simple response. You can enhance this with more sophisticated logic."
     
     def get_available_voices(self) -> List[Dict]:
-        """Get list of available ElevenLabs voices."""
+        """Get list of available ElevenLabs voices - only custom voices."""
         try:
             available_voices = voices()
-            return [
+            # Filter to only show custom voices (not default ones)
+            custom_voices = [
                 {
                     'voice_id': voice.voice_id,
                     'name': voice.name,
                     'category': voice.category
                 }
                 for voice in available_voices
+                if voice.category == "cloned" or voice.category == "generated" or voice.category == "custom"
             ]
+            return custom_voices
         except Exception as e:
             print(f"Error getting voices: {e}")
             return []
