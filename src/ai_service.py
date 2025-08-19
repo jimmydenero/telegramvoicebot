@@ -1,34 +1,42 @@
-import openai
 import os
 import tempfile
 import requests
-from elevenlabs import generate, save, set_api_key, Voice, VoiceSettings
+import json
+from elevenlabs import generate, save, set_api_key, voices, clone
 from elevenlabs.api import History
 from typing import List, Dict, Optional
 from .database import AIKnowledgeDatabase
 
 class AIService:
-    def __init__(self, api_key: str, model: str = "gpt-4", max_tokens: int = 1000, temperature: float = 0.7):
-        self.client = openai.OpenAI(api_key=api_key)
-        self.model = model
-        self.max_tokens = max_tokens
-        self.temperature = temperature
+    def __init__(self, elevenlabs_api_key: str = None):
         self.db = AIKnowledgeDatabase()
         
         # Set up ElevenLabs API key
-        elevenlabs_api_key = os.getenv('ELEVENLABS_API_KEY')
-        if elevenlabs_api_key:
-            set_api_key(elevenlabs_api_key)
+        api_key = elevenlabs_api_key or os.getenv('ELEVENLABS_API_KEY')
+        if api_key:
+            set_api_key(api_key)
+            self.api_key = api_key
+        else:
+            raise ValueError("ELEVENLABS_API_KEY not found in environment variables")
     
     def speech_to_text(self, audio_file_path: str) -> str:
-        """Convert speech from audio file to text using OpenAI's Whisper API."""
+        """Convert speech from audio file to text using ElevenLabs Speech-to-Text API."""
         try:
+            url = "https://api.elevenlabs.io/v1/speech-to-text"
+            
             with open(audio_file_path, "rb") as audio_file:
-                transcript = self.client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file
-                )
-            return transcript.text
+                files = {"file": audio_file}
+                headers = {"xi-api-key": self.api_key}
+                
+                response = requests.post(url, files=files, headers=headers)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return result.get("text", "")
+                else:
+                    print(f"Speech-to-text error: {response.status_code} - {response.text}")
+                    return ""
+                    
         except Exception as e:
             print(f"Error in speech to text: {e}")
             return ""
@@ -50,6 +58,31 @@ class AIService:
             print(f"Error in text to speech: {e}")
             return False
     
+    def voice_to_voice(self, input_audio_path: str, output_path: str, target_voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:
+        """Direct voice-to-voice conversion using ElevenLabs Voice Conversion API."""
+        try:
+            url = f"https://api.elevenlabs.io/v1/voice-conversion"
+            
+            with open(input_audio_path, "rb") as audio_file:
+                files = {"input_file": audio_file}
+                data = {"voice_id": target_voice_id}
+                headers = {"xi-api-key": self.api_key}
+                
+                response = requests.post(url, files=files, data=data, headers=headers)
+                
+                if response.status_code == 200:
+                    # Save the converted audio
+                    with open(output_path, "wb") as f:
+                        f.write(response.content)
+                    return "Voice converted successfully"
+                else:
+                    print(f"Voice conversion error: {response.status_code} - {response.text}")
+                    return ""
+                    
+        except Exception as e:
+            print(f"Error in voice to voice conversion: {e}")
+            return ""
+    
     def speech_to_speech(self, audio_file_path: str, output_path: str, voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:
         """Complete speech-to-speech pipeline using ElevenLabs."""
         try:
@@ -59,8 +92,8 @@ class AIService:
             if not text:
                 return ""
             
-            # Step 2: Generate AI response
-            ai_response = self.generate_response(text)
+            # Step 2: Generate a simple response (no OpenAI needed)
+            ai_response = self.generate_simple_response(text)
             
             # Step 3: Convert AI response to speech
             if self.text_to_speech(ai_response, output_path, voice_id):
@@ -72,10 +105,27 @@ class AIService:
             print(f"Error in speech to speech: {e}")
             return ""
     
+    def generate_simple_response(self, user_message: str) -> str:
+        """Generate a simple response without using OpenAI."""
+        # Simple response logic - you can enhance this
+        message_lower = user_message.lower()
+        
+        if "hello" in message_lower or "hi" in message_lower:
+            return "Hello! I'm your AI assistant. How can I help you today?"
+        elif "how are you" in message_lower:
+            return "I'm doing great! Thanks for asking. How can I assist you?"
+        elif "what can you do" in message_lower:
+            return "I can help you with various tasks, answer questions, and convert voice messages. Just let me know what you need!"
+        elif "thank you" in message_lower or "thanks" in message_lower:
+            return "You're welcome! I'm happy to help."
+        elif "bye" in message_lower or "goodbye" in message_lower:
+            return "Goodbye! Have a great day!"
+        else:
+            return f"I received your message: '{user_message}'. This is a simple response. You can enhance this with more sophisticated logic."
+    
     def get_available_voices(self) -> List[Dict]:
         """Get list of available ElevenLabs voices."""
         try:
-            from elevenlabs import voices
             available_voices = voices()
             return [
                 {
@@ -92,9 +142,14 @@ class AIService:
     def convert_ogg_to_wav(self, ogg_path: str, wav_path: str) -> bool:
         """Convert OGG audio file to WAV format."""
         try:
-            audio = AudioSegment.from_ogg(ogg_path)
-            audio.export(wav_path, format="wav")
-            return True
+            # Simple conversion using ffmpeg or similar
+            import subprocess
+            result = subprocess.run([
+                'ffmpeg', '-i', ogg_path, '-acodec', 'pcm_s16le', 
+                '-ar', '44100', '-ac', '2', wav_path
+            ], capture_output=True, text=True)
+            
+            return result.returncode == 0
         except Exception as e:
             print(f"Error converting audio format: {e}")
             return False
@@ -117,49 +172,18 @@ class AIService:
         return knowledge_text
     
     def generate_response(self, user_message: str, user_id: int = None) -> str:
-        """Generate a response using ChatGPT with relevant knowledge context."""
+        """Generate a response using the simple response generator."""
         # Get relevant knowledge from database
         relevant_knowledge = self.get_relevant_knowledge(user_message)
         
-        # Build the system prompt
-        system_prompt = """You are an AI assistant with expertise in artificial intelligence. You have access to a knowledge database about AI topics. 
-
-When answering questions:
-1. Use the provided knowledge base information when relevant
-2. Provide accurate, helpful, and informative responses
-3. If the knowledge base doesn't contain relevant information, use your general AI knowledge
-4. Keep responses concise but comprehensive
-5. Be conversational and friendly
-
-Always cite sources when possible and acknowledge when information comes from the knowledge base."""
-
-        # Build the user message with context
-        if relevant_knowledge:
-            user_prompt = f"Context from knowledge base:\n{relevant_knowledge}\n\nUser question: {user_message}"
-        else:
-            user_prompt = f"User question: {user_message}"
+        # Generate response
+        ai_response = self.generate_simple_response(user_message)
         
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                max_tokens=self.max_tokens,
-                temperature=self.temperature
-            )
-            
-            ai_response = response.choices[0].message.content
-            
-            # Save conversation to database if user_id is provided
-            if user_id:
-                self.db.save_conversation(user_id, user_message, ai_response)
-            
-            return ai_response
-            
-        except Exception as e:
-            return f"I apologize, but I encountered an error while processing your request: {str(e)}"
+        # Save conversation to database if user_id is provided
+        if user_id:
+            self.db.save_conversation(user_id, user_message, ai_response)
+        
+        return ai_response
     
     def add_knowledge_to_database(self, title: str, content: str, category: str = None, tags: List[str] = None):
         """Add new knowledge to the database."""

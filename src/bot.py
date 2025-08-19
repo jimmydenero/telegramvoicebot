@@ -20,10 +20,7 @@ class TelegramAIBot:
     def __init__(self):
         self.token = os.getenv('TELEGRAM_BOT_TOKEN')
         self.ai_service = AIService(
-            api_key=os.getenv('OPENAI_API_KEY'),
-            model=os.getenv('OPENAI_MODEL', 'gpt-4'),
-            max_tokens=int(os.getenv('MAX_TOKENS', 1000)),
-            temperature=float(os.getenv('TEMPERATURE', 0.7))
+            elevenlabs_api_key=os.getenv('ELEVENLABS_API_KEY')
         )
         
         if not self.token:
@@ -239,31 +236,44 @@ Just send me a text message or voice message with your AI question!
                     await update.message.reply_text("Sorry, I couldn't process the audio file. Please try again.")
                     return
             
-            # Use ElevenLabs speech-to-speech
+            # Use ElevenLabs voice-to-voice conversion
             with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as temp_mp3:
                 mp3_path = temp_mp3.name
                 
-                # Complete speech-to-speech pipeline
-                ai_response = self.ai_service.speech_to_speech(wav_path, mp3_path)
+                # Direct voice-to-voice conversion
+                result = self.ai_service.voice_to_voice(wav_path, mp3_path)
                 
-                if ai_response:
-                    # Send the transcribed text
-                    user_message = self.ai_service.speech_to_text(wav_path)
-                    await update.message.reply_text(f"🎤 You said: {user_message}")
-                    
-                    # Send text response
-                    await update.message.reply_text(ai_response)
-                    
-                    # Send voice response
+                if result:
+                    # Send the converted voice
                     with open(mp3_path, 'rb') as audio_file:
                         await context.bot.send_audio(
                             chat_id=update.effective_chat.id,
                             audio=audio_file,
-                            title="AI Voice Response",
-                            performer="AI Assistant (ElevenLabs)"
+                            title="Voice Converted",
+                            performer="ElevenLabs Voice Conversion"
                         )
                 else:
-                    await update.message.reply_text("Sorry, I couldn't process your voice message. Please try again.")
+                    # Fallback to speech-to-speech if voice conversion fails
+                    ai_response = self.ai_service.speech_to_speech(wav_path, mp3_path)
+                    
+                    if ai_response:
+                        # Send the transcribed text
+                        user_message = self.ai_service.speech_to_text(wav_path)
+                        await update.message.reply_text(f"🎤 You said: {user_message}")
+                        
+                        # Send text response
+                        await update.message.reply_text(ai_response)
+                        
+                        # Send voice response
+                        with open(mp3_path, 'rb') as audio_file:
+                            await context.bot.send_audio(
+                                chat_id=update.effective_chat.id,
+                                audio=audio_file,
+                                title="AI Voice Response",
+                                performer="AI Assistant (ElevenLabs)"
+                            )
+                    else:
+                        await update.message.reply_text("Sorry, I couldn't process your voice message. Please try again.")
             
             # Clean up temporary files
             os.unlink(ogg_path)
@@ -292,31 +302,44 @@ Just send me a text message or voice message with your AI question!
                 audio_path = temp_audio.name
                 await file.download_to_drive(audio_path)
             
-            # Use ElevenLabs speech-to-speech
+            # Use ElevenLabs voice-to-voice conversion
             with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as temp_mp3:
                 mp3_path = temp_mp3.name
                 
-                # Complete speech-to-speech pipeline
-                ai_response = self.ai_service.speech_to_speech(audio_path, mp3_path)
+                # Direct voice-to-voice conversion
+                result = self.ai_service.voice_to_voice(audio_path, mp3_path)
                 
-                if ai_response:
-                    # Send the transcribed text
-                    user_message = self.ai_service.speech_to_text(audio_path)
-                    await update.message.reply_text(f"🎵 You said: {user_message}")
-                    
-                    # Send text response
-                    await update.message.reply_text(ai_response)
-                    
-                    # Send voice response
+                if result:
+                    # Send the converted voice
                     with open(mp3_path, 'rb') as audio_file:
                         await context.bot.send_audio(
                             chat_id=update.effective_chat.id,
                             audio=audio_file,
-                            title="AI Voice Response",
-                            performer="AI Assistant (ElevenLabs)"
+                            title="Voice Converted",
+                            performer="ElevenLabs Voice Conversion"
                         )
                 else:
-                    await update.message.reply_text("Sorry, I couldn't process your audio message. Please try again.")
+                    # Fallback to speech-to-speech if voice conversion fails
+                    ai_response = self.ai_service.speech_to_speech(audio_path, mp3_path)
+                    
+                    if ai_response:
+                        # Send the transcribed text
+                        user_message = self.ai_service.speech_to_text(audio_path)
+                        await update.message.reply_text(f"🎵 You said: {user_message}")
+                        
+                        # Send text response
+                        await update.message.reply_text(ai_response)
+                        
+                        # Send voice response
+                        with open(mp3_path, 'rb') as audio_file:
+                            await context.bot.send_audio(
+                                chat_id=update.effective_chat.id,
+                                audio=audio_file,
+                                title="AI Voice Response",
+                                performer="AI Assistant (ElevenLabs)"
+                            )
+                    else:
+                        await update.message.reply_text("Sorry, I couldn't process your audio message. Please try again.")
             
             # Clean up temporary files
             os.unlink(audio_path)
