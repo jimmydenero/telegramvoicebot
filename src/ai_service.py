@@ -63,31 +63,25 @@ class AIService:
             return False
     
     def voice_to_voice(self, input_audio_path: str, output_path: str, target_voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:
-        """Direct voice-to-voice conversion using ElevenLabs Speech-to-Speech API."""
+        """Voice-to-voice conversion using speech-to-text then text-to-speech."""
         try:
             print(f"Starting voice-to-voice conversion for file: {input_audio_path}")
-            url = "https://api.elevenlabs.io/v1/speech-to-speech"
             
-            with open(input_audio_path, "rb") as audio_file:
-                files = {"audio": audio_file}
-                data = {"voice_id": target_voice_id}
-                headers = {"xi-api-key": self.api_key}
-                
-                print("Sending request to ElevenLabs Speech-to-Speech API")
-                response = requests.post(url, files=files, data=data, headers=headers)
-                
-                if response.status_code == 200:
-                    # Save the converted audio
-                    with open(output_path, "wb") as f:
-                        f.write(response.content)
-                    print("Voice-to-voice conversion successful")
-                    return "Voice converted successfully"
-                else:
-                    print(f"Voice-to-voice error: {response.status_code} - {response.text}")
-                    return ""
+            # Check if file exists and get file size
+            if not os.path.exists(input_audio_path):
+                print(f"Error: Input file does not exist: {input_audio_path}")
+                return ""
+            
+            file_size = os.path.getsize(input_audio_path)
+            print(f"Input file size: {file_size} bytes")
+            
+            # Use the reliable method: speech-to-text then text-to-speech
+            return self.fallback_voice_conversion(input_audio_path, output_path, target_voice_id)
                     
         except Exception as e:
             print(f"Error in voice to voice conversion: {e}")
+            import traceback
+            traceback.print_exc()
             return ""
     
     def fallback_voice_conversion(self, input_audio_path: str, output_path: str, target_voice_id: str) -> str:
