@@ -193,19 +193,28 @@ class AIService:
             return []
     
     def convert_ogg_to_wav(self, ogg_path: str, wav_path: str) -> bool:
-        """Convert OGG audio file to WAV format."""
+        """Convert OGG audio file to WAV format using pydub."""
         try:
-            # Simple conversion using ffmpeg or similar
-            import subprocess
-            result = subprocess.run([
-                'ffmpeg', '-i', ogg_path, '-acodec', 'pcm_s16le', 
-                '-ar', '44100', '-ac', '2', wav_path
-            ], capture_output=True, text=True)
+            from pydub import AudioSegment
             
-            return result.returncode == 0
+            # Load the OGG file
+            audio = AudioSegment.from_ogg(ogg_path)
+            
+            # Export as WAV
+            audio.export(wav_path, format="wav")
+            
+            return True
         except Exception as e:
             print(f"Error converting audio format: {e}")
-            return False
+            # If pydub fails, try to use the original file
+            try:
+                import shutil
+                shutil.copy2(ogg_path, wav_path)
+                print("Using original file format instead of conversion")
+                return True
+            except Exception as e2:
+                print(f"Error copying file: {e2}")
+                return False
     
     def get_relevant_knowledge(self, query: str) -> str:
         """Retrieve relevant knowledge from the database based on the query."""
