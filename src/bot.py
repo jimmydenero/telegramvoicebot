@@ -4,7 +4,7 @@ import tempfile
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from dotenv import load_dotenv
-from ai_service import AIService
+from .ai_service import AIService
 
 # Load environment variables
 load_dotenv()

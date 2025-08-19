@@ -5,7 +5,7 @@ import requests
 from elevenlabs import generate, save, set_api_key, Voice, VoiceSettings
 from elevenlabs.api import History
 from typing import List, Dict, Optional
-from database import AIKnowledgeDatabase
+from .database import AIKnowledgeDatabase
 
 class AIService:
     def __init__(self, api_key: str, model: str = "gpt-4", max_tokens: int = 1000, temperature: float = 0.7):
