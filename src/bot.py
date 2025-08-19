@@ -34,13 +34,9 @@ class TelegramAIBot:
         # Command handlers
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
-        self.application.add_handler(CommandHandler("search", self.search_command))
-        self.application.add_handler(CommandHandler("history", self.history_command))
-        self.application.add_handler(CommandHandler("add_knowledge", self.add_knowledge_command))
         self.application.add_handler(CommandHandler("voices", self.voices_command))
         
-        # Message handlers
-        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
+        # Message handlers - voice only
         self.application.add_handler(MessageHandler(filters.VOICE, self.handle_voice_message))
         self.application.add_handler(MessageHandler(filters.AUDIO, self.handle_audio_message))
         
@@ -50,23 +46,25 @@ class TelegramAIBot:
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command."""
         welcome_message = """
-🤖 Welcome to the AI Knowledge Bot!
+🎤 Welcome to the Voice Conversion Bot!
 
-I'm here to help you with questions about artificial intelligence. I have access to a comprehensive knowledge database and can provide detailed answers.
+I convert your voice messages to different ElevenLabs voices.
 
 **Available Commands:**
 /start - Show this welcome message
 /help - Show help information
-/search <query> - Search the knowledge database
-/history - Show your conversation history
-/add_knowledge - Add new knowledge to the database
 /voices - List available ElevenLabs voices
 
-**Voice Features:**
-🎤 Send voice messages and get voice responses!
-📱 Supports both text and voice interactions
+**How to Use:**
+🎤 Send a voice message → Get it converted to a different voice
+🎵 Send an audio file → Get it converted to a different voice
 
-**Just ask me anything about AI!** 🧠
+**Voice Features:**
+🎤 Direct voice-to-voice conversion using ElevenLabs
+🎭 Multiple voice options available
+🔊 No text responses - pure voice conversion
+
+**Just send me a voice message!** 🎤
         """
         
         keyboard = [
@@ -81,37 +79,25 @@ I'm here to help you with questions about artificial intelligence. I have access
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command."""
         help_text = """
-📖 **Bot Help Guide**
+🎤 **Voice Conversion Bot Help**
 
 **Commands:**
 • `/start` - Welcome message and main menu
 • `/help` - Show this help information
-• `/search <query>` - Search the AI knowledge database
-• `/history` - View your conversation history
-• `/add_knowledge` - Add new knowledge to the database
-
-**Examples:**
-• `/search machine learning`
-• `/search neural networks`
-• `/search AI ethics`
-
-**Features:**
-• 🤖 Powered by ChatGPT
-• 📚 Access to AI knowledge database
-• 💬 Conversation history tracking
-• 🔍 Smart knowledge search
-• 📝 Add your own knowledge
-• 🎤 **Voice-to-Voice Chat** - Send voice messages and get voice responses!
-
-**Voice Features:**
-• Send voice messages to ask questions
-• Get both text and voice responses
-• Supports both voice messages and audio files
-• Uses OpenAI Whisper for accurate speech recognition
-• Uses ElevenLabs for natural, high-quality voice responses
 • `/voices` - List available ElevenLabs voices
 
-Just send me a text message or voice message with your AI question!
+**How to Use:**
+• Send a voice message → Get it converted to a different voice
+• Send an audio file → Get it converted to a different voice
+• Use `/voices` to see available voice options
+
+**Voice Features:**
+• Direct voice-to-voice conversion using ElevenLabs
+• No text responses - pure voice conversion
+• Supports voice messages and audio files
+• Multiple voice options available
+
+**Just send me a voice message!** 🎤
         """
         await update.message.reply_text(help_text)
     
@@ -236,15 +222,15 @@ Just send me a text message or voice message with your AI question!
                     await update.message.reply_text("Sorry, I couldn't process the audio file. Please try again.")
                     return
             
-            # Use ElevenLabs voice-to-voice conversion
+            # Direct voice-to-voice conversion only
             with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as temp_mp3:
                 mp3_path = temp_mp3.name
                 
-                # Direct voice-to-voice conversion
+                # Convert voice directly to target voice
                 result = self.ai_service.voice_to_voice(wav_path, mp3_path)
                 
                 if result:
-                    # Send the converted voice
+                    # Send only the converted voice - no text
                     with open(mp3_path, 'rb') as audio_file:
                         await context.bot.send_audio(
                             chat_id=update.effective_chat.id,
@@ -253,27 +239,7 @@ Just send me a text message or voice message with your AI question!
                             performer="ElevenLabs Voice Conversion"
                         )
                 else:
-                    # Fallback to speech-to-speech if voice conversion fails
-                    ai_response = self.ai_service.speech_to_speech(wav_path, mp3_path)
-                    
-                    if ai_response:
-                        # Send the transcribed text
-                        user_message = self.ai_service.speech_to_text(wav_path)
-                        await update.message.reply_text(f"🎤 You said: {user_message}")
-                        
-                        # Send text response
-                        await update.message.reply_text(ai_response)
-                        
-                        # Send voice response
-                        with open(mp3_path, 'rb') as audio_file:
-                            await context.bot.send_audio(
-                                chat_id=update.effective_chat.id,
-                                audio=audio_file,
-                                title="AI Voice Response",
-                                performer="AI Assistant (ElevenLabs)"
-                            )
-                    else:
-                        await update.message.reply_text("Sorry, I couldn't process your voice message. Please try again.")
+                    await update.message.reply_text("Sorry, I couldn't convert your voice. Please try again.")
             
             # Clean up temporary files
             os.unlink(ogg_path)
@@ -302,15 +268,15 @@ Just send me a text message or voice message with your AI question!
                 audio_path = temp_audio.name
                 await file.download_to_drive(audio_path)
             
-            # Use ElevenLabs voice-to-voice conversion
+            # Direct voice-to-voice conversion only
             with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as temp_mp3:
                 mp3_path = temp_mp3.name
                 
-                # Direct voice-to-voice conversion
+                # Convert voice directly to target voice
                 result = self.ai_service.voice_to_voice(audio_path, mp3_path)
                 
                 if result:
-                    # Send the converted voice
+                    # Send only the converted voice - no text
                     with open(mp3_path, 'rb') as audio_file:
                         await context.bot.send_audio(
                             chat_id=update.effective_chat.id,
@@ -319,27 +285,7 @@ Just send me a text message or voice message with your AI question!
                             performer="ElevenLabs Voice Conversion"
                         )
                 else:
-                    # Fallback to speech-to-speech if voice conversion fails
-                    ai_response = self.ai_service.speech_to_speech(audio_path, mp3_path)
-                    
-                    if ai_response:
-                        # Send the transcribed text
-                        user_message = self.ai_service.speech_to_text(audio_path)
-                        await update.message.reply_text(f"🎵 You said: {user_message}")
-                        
-                        # Send text response
-                        await update.message.reply_text(ai_response)
-                        
-                        # Send voice response
-                        with open(mp3_path, 'rb') as audio_file:
-                            await context.bot.send_audio(
-                                chat_id=update.effective_chat.id,
-                                audio=audio_file,
-                                title="AI Voice Response",
-                                performer="AI Assistant (ElevenLabs)"
-                            )
-                    else:
-                        await update.message.reply_text("Sorry, I couldn't process your audio message. Please try again.")
+                    await update.message.reply_text("Sorry, I couldn't convert your voice. Please try again.")
             
             # Clean up temporary files
             os.unlink(audio_path)
