@@ -130,7 +130,7 @@ Just click "Generate Voice" to start!
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(
-                "Send me some text and I'll convert it to speech! Click the button below to select a voice:",
+                "Click to Generate",
                 reply_markup=reply_markup
             )
     
@@ -329,7 +329,7 @@ Just click "Generate Voice" to start!
             }
             
             await query.edit_message_text(
-                "Voice Selected! Now send me some text to convert to speech, or send a voice message to convert it to the selected voice."
+                "send text or voice."
             )
     
     def run(self):

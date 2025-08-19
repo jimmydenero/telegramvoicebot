@@ -63,10 +63,29 @@ class AIService:
             return False
     
     def voice_to_voice(self, input_audio_path: str, output_path: str, target_voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> str:
-        """Voice-to-voice conversion using speech-to-text then text-to-speech."""
+        """Direct voice-to-voice conversion using ElevenLabs Speech-to-Speech API."""
         try:
-            # Use the reliable fallback method directly
-            return self.fallback_voice_conversion(input_audio_path, output_path, target_voice_id)
+            print(f"Starting voice-to-voice conversion for file: {input_audio_path}")
+            url = "https://api.elevenlabs.io/v1/speech-to-speech"
+            
+            with open(input_audio_path, "rb") as audio_file:
+                files = {"audio": audio_file}
+                data = {"voice_id": target_voice_id}
+                headers = {"xi-api-key": self.api_key}
+                
+                print("Sending request to ElevenLabs Speech-to-Speech API")
+                response = requests.post(url, files=files, data=data, headers=headers)
+                
+                if response.status_code == 200:
+                    # Save the converted audio
+                    with open(output_path, "wb") as f:
+                        f.write(response.content)
+                    print("Voice-to-voice conversion successful")
+                    return "Voice converted successfully"
+                else:
+                    print(f"Voice-to-voice error: {response.status_code} - {response.text}")
+                    return ""
+                    
         except Exception as e:
             print(f"Error in voice to voice conversion: {e}")
             return ""
